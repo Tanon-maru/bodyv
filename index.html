@@ -249,8 +249,8 @@
       <!-- Login Form -->
       <form id="formLogin" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label class="form-label">รหัส ABO</label>
-          <input type="text" id="loginUsername" class="form-control" placeholder="กรอกรหัส ABO" autocapitalize="none" autocorrect="off" spellcheck="false" required autocomplete="username">
+          <label class="form-label">รหัสสมาชิก</label>
+          <input type="text" id="loginUsername" class="form-control" placeholder="กรอกรหัสสมาชิก" autocapitalize="none" autocorrect="off" spellcheck="false" required autocomplete="username">
         </div>
         <div class="form-group" style="margin-bottom: 20px;">
           <label class="form-label">รหัสผ่าน (Password)</label>
@@ -288,11 +288,11 @@
       <!-- TAB 1: CLIENTS -->
       <section id="sectionClients" class="tab-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <h2 style="font-size: 1.25rem; font-weight: 700;">ลูกค้าทั้งหมด</h2>
-          <button class="btn btn-primary btn-sm" onclick="openAddClientModal()">+ เพิ่มลูกค้าใหม่</button>
+          <h2 id="clientsHeading" style="font-size: 1.25rem; font-weight: 700;">สมาชิกในความดูแล</h2>
+          <button id="btnAddClientOpen" class="btn btn-primary btn-sm" onclick="openAddClientModal()">+ เพิ่มลูกค้าใหม่</button>
         </div>
         <div style="margin-bottom: 14px;">
-          <input type="text" id="clientSearchInput" class="form-control" placeholder="🔍 ค้นหาชื่อลูกค้า หรืออาชีพ..." oninput="filterClients()">
+          <input type="text" id="clientSearchInput" class="form-control" placeholder="🔍 ค้นหาชื่อ รหัสสมาชิก หรืออาชีพ..." oninput="filterClients()">
         </div>
         <div id="clientsList"></div>
       </section>
@@ -551,6 +551,20 @@
         </div>
         <div class="input-row">
           <div class="form-group">
+            <label class="form-label">รหัสสมาชิก <span class="required">*</span></label>
+            <input type="text" id="newClientCode" class="form-control" placeholder="ใช้ล็อกอิน" autocapitalize="none" autocorrect="off" spellcheck="false" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">รหัสผ่าน <span class="required">*</span></label>
+            <input type="password" id="newClientPassword" class="form-control" placeholder="อย่างน้อย 4 ตัว" minlength="4" required autocomplete="new-password">
+          </div>
+        </div>
+        <div class="form-group" id="newClientManagerGroup" style="display: none;">
+          <label class="form-label">ABO ผู้ดูแล <span class="required">*</span></label>
+          <select id="newClientManager" class="form-control"></select>
+        </div>
+        <div class="input-row">
+          <div class="form-group">
             <label class="form-label">วันเดือนปีเกิด</label>
             <input type="date" id="newClientDob" class="form-control" onchange="calculateAgeFromDob('newClientDob', 'newClientAge')">
           </div>
@@ -698,9 +712,18 @@
       <div id="adminPanel" class="card" style="display: none; margin-bottom: 16px;">
         <div style="font-weight: 700; margin-bottom: 10px;">👤 จัดการผู้ใช้ (Admin)</div>
         <form id="formAdminCreate" onsubmit="handleAdminCreateUser(event)">
-          <div class="form-group">
-            <label class="form-label">รหัส ABO <span class="required">*</span></label>
-            <input type="text" id="adminNewAbo" class="form-control" placeholder="เช่น 1234567" autocapitalize="none" autocorrect="off" spellcheck="false" required autocomplete="off">
+          <div class="input-row">
+            <div class="form-group">
+              <label class="form-label">รหัสสมาชิก <span class="required">*</span></label>
+              <input type="text" id="adminNewAbo" class="form-control" autocapitalize="none" autocorrect="off" spellcheck="false" required autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ระดับ</label>
+              <select id="adminNewRole" class="form-control">
+                <option value="abo">ABO</option>
+                <option value="leader">Leader</option>
+              </select>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">ชื่อ-นามสกุล <span class="required">*</span></label>
@@ -710,7 +733,8 @@
             <label class="form-label">รหัสผ่าน <span class="required">*</span></label>
             <input type="password" id="adminNewPassword" class="form-control" placeholder="อย่างน้อย 4 ตัวอักษร" minlength="4" required autocomplete="new-password">
           </div>
-          <button type="submit" id="btnAdminCreate" class="btn btn-primary btn-block">➕ สร้างบัญชี</button>
+          <button type="submit" id="btnAdminCreate" class="btn btn-primary btn-block">➕ สร้างบัญชี ABO / Leader</button>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">บัญชีลูกค้า (Customer) สร้างจากปุ่ม "+ เพิ่มลูกค้าใหม่" ในหน้าสมาชิก</p>
         </form>
         <div style="font-weight: 700; margin: 16px 0 6px;">ผู้ใช้ทั้งหมด</div>
         <div id="adminUserList" style="font-size: 0.85rem;"></div>
@@ -844,6 +868,11 @@
         document.getElementById("profileUsernameText").textContent = `@${u.username}`;
         document.getElementById("profileAvatarText").textContent = (u.full_name || u.username).charAt(0).toUpperCase();
         document.getElementById("adminPanel").style.display = u.is_admin ? "block" : "none";
+        const isCustomer = u.role === "customer";
+        document.getElementById("navNewRecord").style.display = isCustomer ? "none" : "";
+        document.getElementById("btnAddClientOpen").style.display = isCustomer ? "none" : "";
+        document.getElementById("clientsHeading").textContent = isCustomer ? "ข้อมูลของฉัน" : "สมาชิกในความดูแล";
+        document.getElementById("profileUsernameText").textContent = `รหัสสมาชิก ${u.username} • ${u.role_label || ""}`;
       }
     }
 
@@ -876,20 +905,99 @@
     }
 
     // ===== Admin: จัดการผู้ใช้ =====
+    const ROLE_OPTIONS = [["customer", "Customer"], ["abo", "ABO"], ["leader", "Leader"]];
+
     async function loadAdminUsers() {
       const box = document.getElementById("adminUserList");
       box.textContent = "กำลังโหลด...";
       try {
         const res = await runGas("apiAdminListUsers", state.authToken);
         if (!res.success) throw new Error(res.error);
-        box.innerHTML = res.users.map(u => `
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #e2e8f0;">
-            <div><b>${escapeHtml(u.username)}</b><br><span style="color:var(--text-muted);">${escapeHtml(u.full_name)}</span></div>
-            <button type="button" class="btn btn-secondary btn-sm" data-u="${escapeHtml(u.username)}" onclick="handleAdminResetPassword(this.dataset.u)">${u.username === "admin" ? "เปลี่ยนรหัส" : "รีเซ็ตรหัส"}</button>
-          </div>`).join("") || "ยังไม่มีผู้ใช้";
+        state.adminUsers = res.users;
+        renderAdminUsers();
       } catch (err) {
         box.textContent = err.message;
       }
+    }
+
+    function renderAdminUsers() {
+      const users = state.adminUsers || [];
+      const managers = users.filter(u => u.role === "abo" || u.role === "leader");
+      const order = { admin: 0, leader: 1, abo: 2, customer: 3 };
+      const sorted = users.slice().sort((a, b) => (order[a.role] - order[b.role]) || a.name.localeCompare(b.name));
+      document.getElementById("adminUserList").innerHTML = sorted.map(u => {
+        const head = `
+          <div><b>${escapeHtml(u.name)}</b> <span class="badge badge-success">${escapeHtml(u.role_label)}</span></div>
+          <div style="color:var(--text-muted); font-size:0.78rem; margin-top:2px;">
+            🆔 ${escapeHtml(u.member_code)}
+            ${u.role === "customer" && u.manager_name ? ` • ผู้ดูแล: ${escapeHtml(u.manager_name)}` : ""}
+            ${u.customer_count ? ` • ลูกค้า ${u.customer_count} คน` : ""}
+            ${u.role === "leader" ? ` • ดูแล ${u.assigned_ids.length} คน` : ""}
+          </div>`;
+        if (u.role === "admin") {
+          return `<div style="padding:10px 0; border-bottom:1px solid #e2e8f0;">${head}
+            <div style="margin-top:6px;"><button type="button" class="btn btn-secondary btn-sm" onclick="handleResetPassword(${u.id})">🔑 เปลี่ยนรหัสผ่าน</button></div></div>`;
+        }
+        const roleSel = `<select class="form-control" style="width:auto; padding:4px 8px; font-size:0.8rem;" onchange="adminSetRole(${u.id}, this.value, this)">
+            ${ROLE_OPTIONS.map(([v, l]) => `<option value="${v}" ${u.role === v ? "selected" : ""}>${l}</option>`).join("")}
+          </select>`;
+        const mgrSel = u.role === "customer" ? `<select class="form-control" style="width:auto; max-width:100%; padding:4px 8px; font-size:0.8rem;" onchange="adminSetManager(${u.id}, this.value)">
+            <option value="">-- ผู้ดูแล --</option>
+            ${managers.filter(m => m.id !== u.id).map(m => `<option value="${m.id}" ${u.manager_id === m.id ? "selected" : ""}>${escapeHtml(m.name)} (${escapeHtml(m.member_code)})</option>`).join("")}
+          </select>` : "";
+        const assignBtn = u.role === "leader" ? `<button type="button" class="btn btn-secondary btn-sm" onclick="toggleAssign(${u.id})">👥 มอบหมาย</button>` : "";
+        const assignBox = u.role === "leader" ? `<div id="assignBox${u.id}" style="display:none; margin-top:8px; padding:8px; background:#f8fafc; border-radius:8px;">
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:6px;">เลือก ABO (ดูข้อมูลได้) และ Leader (จัดการข้อมูลได้) ที่ให้ ${escapeHtml(u.name)} ดูแล</div>
+            ${managers.filter(m => m.id !== u.id).map(m => `<label style="display:flex; gap:6px; align-items:center; padding:3px 0;">
+              <input type="checkbox" value="${m.id}" ${u.assigned_ids.includes(m.id) ? "checked" : ""}> ${escapeHtml(m.name)} (${escapeHtml(m.member_code)}) - ${escapeHtml(m.role_label)}</label>`).join("") || "ยังไม่มี ABO / Leader คนอื่น"}
+            <button type="button" class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="saveAssign(${u.id})">💾 บันทึกการมอบหมาย</button>
+          </div>` : "";
+        return `<div style="padding:10px 0; border-bottom:1px solid #e2e8f0;">${head}
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:6px;">
+            ${roleSel}${mgrSel}${assignBtn}
+            <button type="button" class="btn btn-secondary btn-sm" onclick="handleResetPassword(${u.id})">🔑 รีเซ็ตรหัส</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="adminDeleteUser(${u.id})">🗑️ ลบ</button>
+          </div>${assignBox}</div>`;
+      }).join("") || "ยังไม่มีผู้ใช้";
+    }
+
+    function toggleAssign(id) {
+      const box = document.getElementById("assignBox" + id);
+      if (box) box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    async function saveAssign(leaderId) {
+      const ids = [...document.querySelectorAll(`#assignBox${leaderId} input[type=checkbox]:checked`)].map(x => Number(x.value));
+      await adminCall("apiAdminSetAssignments", [leaderId, ids], "บันทึกการมอบหมายแล้ว");
+    }
+
+    async function adminSetRole(id, role, sel) {
+      const u = (state.adminUsers || []).find(x => x.id === id);
+      if (!confirm(`เปลี่ยน ${u ? u.name : ""} เป็น ${role.toUpperCase()} ?`)) { renderAdminUsers(); return; }
+      await adminCall("apiAdminSetRole", [id, role], "เปลี่ยนระดับแล้ว");
+    }
+
+    async function adminSetManager(id, managerId) {
+      if (!managerId) return;
+      await adminCall("apiAdminSetManager", [id, Number(managerId)], "เปลี่ยนผู้ดูแลแล้ว");
+    }
+
+    async function adminDeleteUser(id) {
+      const u = (state.adminUsers || []).find(x => x.id === id);
+      if (!u || !confirm(`ลบบัญชี ${u.name} (${u.member_code}) และข้อมูลทั้งหมดของเขา? รูปจะถูกย้ายไปถังขยะ Drive`)) return;
+      await adminCall("apiDeleteClient", [id], "ลบบัญชีแล้ว");
+    }
+
+    async function adminCall(fn, args, okMsg) {
+      try {
+        const res = await runGas(fn, state.authToken, ...args);
+        if (!res.success) throw new Error(res.error);
+        showToast(okMsg, "success");
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+      await loadAdminUsers();
+      loadClients();
     }
 
     async function handleAdminCreateUser(e) {
@@ -901,26 +1009,43 @@
         const res = await runGas("apiAdminCreateUser", state.authToken,
           document.getElementById("adminNewAbo").value.trim(),
           document.getElementById("adminNewName").value.trim(),
-          document.getElementById("adminNewPassword").value);
+          document.getElementById("adminNewPassword").value,
+          document.getElementById("adminNewRole").value);
         if (!res.success) throw new Error(res.error);
-        showToast(`สร้างบัญชี ${res.user.username} แล้ว`, "success");
+        showToast(`สร้างบัญชี ${res.user.member_code} แล้ว`, "success");
         document.getElementById("formAdminCreate").reset();
         loadAdminUsers();
+        loadClients();
       } catch (err) {
         showToast(err.message, "error");
       } finally {
         btn.disabled = false;
-        btn.textContent = "➕ สร้างบัญชี";
+        btn.textContent = "➕ สร้างบัญชี ABO / Leader";
       }
     }
 
-    async function handleAdminResetPassword(username) {
-      const p = prompt(`ตั้งรหัสผ่านใหม่ให้ ${username} (อย่างน้อย 4 ตัวอักษร)`);
+    // ===== เปลี่ยนรหัสผ่าน / เลื่อนเป็น ABO =====
+    async function handleResetPassword(personId) {
+      const p = prompt("ตั้งรหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร)");
       if (!p) return;
       try {
-        const res = await runGas("apiAdminResetPassword", state.authToken, username, p);
+        const res = await runGas("apiResetUserPassword", state.authToken, personId, p);
         if (!res.success) throw new Error(res.error);
         showToast("เปลี่ยนรหัสผ่านแล้ว", "success");
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    async function handleUpgradeToAbo(personId) {
+      const c = state.selectedClient;
+      if (!confirm(`เปลี่ยน ${c ? c.name : ""} จาก Customer เป็น ABO ? (ใช้รหัสสมาชิกเดิมล็อกอิน ข้อมูลเดิมอยู่ครบ)`)) return;
+      try {
+        const res = await runGas("apiUpgradeToAbo", state.authToken, personId);
+        if (!res.success) throw new Error(res.error);
+        showToast("เปลี่ยนเป็น ABO แล้ว", "success");
+        await loadClients();
+        viewClientDetail(personId);
       } catch (err) {
         showToast(err.message, "error");
       }
@@ -958,9 +1083,12 @@
     async function loadClients() {
       try {
         const res = await runGas("apiGetClients", state.authToken);
+        if (res && res.success === false) throw new Error(res.error);
         state.clients = (res && res.clients) ? res.clients : [];
+        state.managers = (res && res.managers) || [];
         renderClientsList(state.clients);
         populateClientDropdowns();
+        if (state.currentUser && state.currentUser.role === "customer" && state.clients[0]) viewClientDetail(state.clients[0].id);
       } catch (err) {
         showToast(err.message, "error");
       }
@@ -970,7 +1098,7 @@
       const q = document.getElementById("clientSearchInput").value.trim().toLowerCase();
       if (!q) return renderClientsList(state.clients);
       renderClientsList(state.clients.filter(c =>
-        (c.name && c.name.toLowerCase().includes(q)) || (c.occupation && c.occupation.toLowerCase().includes(q))
+        (c.name && c.name.toLowerCase().includes(q)) || (c.occupation && c.occupation.toLowerCase().includes(q)) || (c.member_code && c.member_code.toLowerCase().includes(q))
       ));
     }
 
@@ -985,10 +1113,13 @@
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
               <div style="display:flex; align-items:center; gap:8px;">
-                <h3 style="font-size:1.05rem; font-weight:700;">${escapeHtml(c.name)}</h3>
+                <h3 style="font-size:1.05rem; font-weight:700;">${escapeHtml(c.name)}${c.is_self ? ' <span style="font-size:0.75rem; color:var(--primary);">(ฉัน)</span>' : ''}</h3>
+                <span class="badge badge-success">${escapeHtml(c.role_label || '')}</span>
                 <span class="badge ${c.gender === 'male' ? 'badge-primary' : c.gender === 'female' ? 'badge-warning' : 'badge-secondary'}">${c.gender === 'male' ? 'ชาย' : c.gender === 'female' ? 'หญิง' : 'ไม่ระบุ'}</span>
               </div>
               <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
+                <span>🆔 ${escapeHtml(c.member_code || '')}</span> •
+                ${c.manager_name && !c.is_self ? `<span>ผู้ดูแล: ${escapeHtml(c.manager_name)}</span> • ` : ''}
                 ${c.occupation ? `<span>💼 ${escapeHtml(c.occupation)}</span> • ` : ''}
                 <span>${c.age ? `อายุ ${c.age} ปี` : ''}</span>
               </div>
@@ -1006,13 +1137,20 @@
     function populateClientDropdowns() {
       const recordSelect = document.getElementById("recordClientId");
       const compareSelect = document.getElementById("compareClientId");
-      const opts = '<option value="">-- เลือกลูกค้า --</option>' + state.clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
-      if (recordSelect) recordSelect.innerHTML = opts;
+      const optOf = c => `<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.member_code || '')})</option>`;
+      const opts = '<option value="">-- เลือกลูกค้า --</option>' + state.clients.map(optOf).join("");
+      if (recordSelect) recordSelect.innerHTML = '<option value="">-- เลือกลูกค้า --</option>' + state.clients.filter(c => c.can_edit).map(optOf).join("");
       if (compareSelect) compareSelect.innerHTML = opts;
     }
 
     function openAddClientModal() {
       document.getElementById("formAddClient").reset();
+      const isAdmin = state.currentUser && state.currentUser.role === "admin";
+      document.getElementById("newClientManagerGroup").style.display = isAdmin ? "block" : "none";
+      const sel = document.getElementById("newClientManager");
+      sel.required = isAdmin;
+      sel.innerHTML = '<option value="">-- เลือก ABO ผู้ดูแล --</option>' + (state.managers || []).map(m =>
+        `<option value="${m.id}">${escapeHtml(m.name)} (${escapeHtml(m.member_code)}) - ${escapeHtml(m.role_label)}</option>`).join("");
       openModal("modalAddClient");
     }
 
@@ -1038,7 +1176,10 @@
         gender: document.getElementById("newClientGender").value,
         occupation: document.getElementById("newClientOccupation").value.trim(),
         phone: document.getElementById("newClientPhone").value.trim(),
-        notes: document.getElementById("newClientNotes").value.trim()
+        notes: document.getElementById("newClientNotes").value.trim(),
+        member_code: document.getElementById("newClientCode").value.trim(),
+        password: document.getElementById("newClientPassword").value,
+        manager_id: document.getElementById("newClientManager").value
       };
 
       try {
@@ -1086,13 +1227,21 @@
             </div>
             ${c.phone ? `<div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">📞 ${escapeHtml(c.phone)}</div>` : ''}
           </div>
-          <div style="display:flex; gap:6px;">
-            <button class="btn btn-secondary btn-sm" onclick="switchNavTab('clients')">← กลับ</button>
-            <button class="btn btn-danger btn-sm" onclick="handleDeleteClient(${c.id}, '${escapeHtml(c.name)}')">🗑️ ลบ</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+            ${state.currentUser && state.currentUser.role === "customer" ? '' : `<button class="btn btn-secondary btn-sm" onclick="switchNavTab('clients')">← กลับ</button>`}
+            ${c.can_delete ? `<button class="btn btn-danger btn-sm" onclick="handleDeleteClient(${c.id}, '${escapeHtml(c.name)}')">🗑️ ลบ</button>` : ''}
           </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;">
-          <button class="btn btn-primary btn-sm" onclick="navigateToNewRecordForCurrentClient()">➕ บันทึกค่าร่างกาย</button>
+        <div style="font-size:0.82rem; color:var(--text-muted); margin-top:8px;">
+          🆔 รหัสสมาชิก ${escapeHtml(c.member_code || '')} • <span class="badge badge-success">${escapeHtml(c.role_label || '')}</span>
+          ${c.manager_name ? `• ผู้ดูแล: ${escapeHtml(c.manager_name)}` : ''}
+        </div>
+        ${(c.can_upgrade || c.can_reset) ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+          ${c.can_upgrade ? `<button class="btn btn-secondary btn-sm" onclick="handleUpgradeToAbo(${c.id})">⬆️ เปลี่ยนเป็น ABO</button>` : ''}
+          ${c.can_reset ? `<button class="btn btn-secondary btn-sm" onclick="handleResetPassword(${c.id})">🔑 รีเซ็ตรหัสผ่าน</button>` : ''}
+        </div>` : ''}
+        <div style="display:grid; grid-template-columns:${c.can_edit ? '1fr 1fr' : '1fr'}; gap:8px; margin-top:14px;">
+          ${c.can_edit ? `<button class="btn btn-primary btn-sm" onclick="navigateToNewRecordForCurrentClient()">➕ บันทึกค่าร่างกาย</button>` : ''}
           <button class="btn btn-secondary btn-sm" onclick="navigateToCompareForCurrentClient()">⚖️ เปรียบเทียบข้อมูล</button>
         </div>
       `;
@@ -1463,14 +1612,14 @@
           <div class="compare-photo-img-wrap">${r.photo_side_right ? photoImg(r.photo_side_right) : '<div style="color:#64748b; font-size:0.7rem; display:flex; align-items:center; justify-content:center; height:100%;">ไม่มีรูปขวา</div>'}</div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
+        ${state.selectedClient && state.selectedClient.can_edit ? `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
           <button class="btn btn-secondary btn-block" onclick="openEditRecordModal(${r.id})">
             ✏️ แก้ไขข้อมูล
           </button>
           <button class="btn btn-danger btn-block" onclick="handleDeleteRecord(${r.id})">
             🗑️ ลบบันทึกนี้
           </button>
-        </div>
+        </div>` : ''}
       `;
       hydratePhotos(document.getElementById("recDetailContent"));
       openModal("modalRecordDetail");
