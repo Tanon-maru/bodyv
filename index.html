@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#16a34a">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>BodyV Record - ระบบบันทึกและเปรียบเทียบค่าร่างกาย</title>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --primary-glow: rgba(37, 99, 235, 0.25);
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --bg-app: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-muted: #f1f5f9;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 10px 25px -4px rgba(15, 23, 42, 0.12);
+      --safe-bottom: env(safe-area-inset-bottom, 16px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Sarabun", "Noto Sans Thai", sans-serif;
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: calc(75px + var(--safe-bottom));
+      padding-top: var(--safe-top);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .app-header {
+      position: sticky; top: 0; z-index: 40;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-main); }
+    .brand-icon {
+      width: 34px; height: 34px; background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 10px var(--primary-glow);
+    }
+    .brand-title { font-size: 1.15rem; font-weight: 700; }
+    .brand-title span { color: var(--primary); }
+
+    .user-badge {
+      display: flex; align-items: center; gap: 8px; background: var(--bg-muted);
+      padding: 6px 12px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 500;
+      color: var(--text-muted); cursor: pointer; border: 1px solid var(--border);
+    }
+    .user-avatar {
+      width: 22px; height: 22px; background: #cbd5e1; color: #475569; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;
+    }
+
+    .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 16px; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around;
+      padding: 6px 12px calc(8px + var(--safe-bottom)) 12px;
+      max-width: 600px; margin: 0 auto;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; padding: 6px 0; background: none; border: none; color: var(--text-muted);
+      cursor: pointer; transition: all 0.2s ease; font-size: 0.72rem; font-weight: 600; gap: 3px;
+    }
+    .nav-item svg { width: 22px; height: 22px; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item.active svg { transform: translateY(-2px); }
+
+    .card {
+      background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm); padding: 18px; margin-bottom: 16px;
+    }
+    .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .form-label .required { color: var(--danger); }
+    .form-control {
+      width: 100%; padding: 12px 14px; font-size: 0.95rem; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); background: #fff; color: var(--text-main); outline: none;
+      transition: border-color 0.2s; -webkit-appearance: none;
+    }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    textarea.form-control { min-height: 80px; resize: vertical; }
+
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .input-unit-wrapper { position: relative; display: flex; align-items: center; }
+    .input-unit-wrapper .form-control { padding-right: 48px; }
+    .input-unit { position: absolute; right: 12px; font-size: 0.85rem; color: var(--text-muted); pointer-events: none; font-weight: 600; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; font-size: 0.95rem; font-weight: 600; border-radius: var(--radius-sm);
+      border: none; cursor: pointer; transition: all 0.2s ease; text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow); }
+    .btn-primary:active { background: var(--primary-hover); transform: scale(0.98); }
+    .btn-secondary { background: var(--bg-muted); color: var(--text-main); border: 1px solid var(--border); }
+    .btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 6px 12px; font-size: 0.82rem; border-radius: 6px; }
+
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; }
+    .badge-primary { background: var(--primary-light); color: var(--primary); }
+    .badge-success { background: var(--success-light); color: var(--success); }
+    .badge-danger { background: var(--danger-light); color: var(--danger); }
+    .badge-warning { background: var(--warning-light); color: #b45309; }
+    .badge-secondary { background: #f1f5f9; color: #64748b; }
+
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .photo-box {
+      position: relative; aspect-ratio: 3/4; background: var(--bg-muted);
+      border: 2px dashed var(--border); border-radius: var(--radius-md);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; cursor: pointer; overflow: hidden; padding: 6px;
+    }
+    .photo-box input[type="file"] { display: none; }
+    .photo-box .placeholder-icon { width: 28px; height: 28px; color: var(--text-muted); margin-bottom: 4px; }
+    .photo-box .angle-tag { font-size: 0.75rem; font-weight: 700; color: var(--text-main); }
+    .photo-box .angle-hint { font-size: 0.65rem; color: var(--text-muted); line-height: 1.1; margin-top: 2px; }
+    .photo-preview { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-md) - 2px); }
+    .photo-remove-btn {
+      position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0, 0, 0, 0.65); color: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;
+    }
+
+    .compare-stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-card { background: var(--bg-muted); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; }
+    .stat-card-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .stat-card-values { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
+    .stat-card-before { font-size: 0.85rem; color: var(--text-muted); text-decoration: line-through; }
+    .stat-card-after { font-size: 1.15rem; font-weight: 700; color: var(--text-main); }
+    .stat-diff-pill { font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; align-self: flex-start; margin-top: 4px; }
+
+    .view-tabs { display: flex; background: var(--bg-muted); padding: 4px; border-radius: var(--radius-md); margin-bottom: 14px; }
+    .view-tab {
+      flex: 1; text-align: center; padding: 8px 12px; font-size: 0.82rem; font-weight: 600;
+      border: none; background: transparent; color: var(--text-muted); border-radius: 10px; cursor: pointer;
+    }
+    .view-tab.active { background: #fff; color: var(--primary); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); }
+
+    .compare-photos-side { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .compare-photo-col { display: flex; flex-direction: column; gap: 6px; }
+    .compare-photo-header { font-size: 0.75rem; font-weight: 700; text-align: center; padding: 4px 8px; border-radius: var(--radius-full); }
+    .compare-photo-img-wrap { aspect-ratio: 3/4; background: #000; border-radius: var(--radius-md); overflow: hidden; position: relative; }
+    .compare-photo-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+    .slider-container {
+      position: relative; width: 100%; aspect-ratio: 3/4; border-radius: var(--radius-md);
+      overflow: hidden; box-shadow: var(--shadow-md); background: #1e293b; touch-action: pan-y; user-select: none;
+    }
+    .slider-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    .slider-img-after { position: absolute; top: 0; left: 0; width: 50%; height: 100%; overflow: hidden; z-index: 10; }
+    .slider-img-after img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    .slider-divider { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #fff; z-index: 20; cursor: ew-resize; }
+    .slider-handle {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 36px; height: 36px; background: #fff; border: 3px solid var(--primary); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; color: var(--primary);
+    }
+    .slider-label { position: absolute; top: 10px; padding: 4px 8px; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 700; color: #fff; background: rgba(0,0,0,0.6); z-index: 15; }
+    .slider-label-before { left: 10px; }
+    .slider-label-after { right: 10px; }
+
+    .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 400px; pointer-events: none; }
+    .toast {
+      background: #1e293b; color: #fff; padding: 12px 16px; border-radius: var(--radius-md);
+      margin-bottom: 8px; box-shadow: var(--shadow-lg); font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
+    }
+    .toast-success { background: #065f46; border-left: 4px solid var(--success); }
+    .toast-error { background: #991b1b; border-left: 4px solid var(--danger); }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5);
+      z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: #fff; width: 100%; max-width: 600px; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      padding: 24px 20px calc(24px + var(--safe-bottom)) 20px; max-height: 85vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .modal-close { background: var(--bg-muted); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state svg { width: 56px; height: 56px; color: #cbd5e1; margin-bottom: 12px; }
+    .empty-state-title { font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; }
+
+    .history-item {
+      display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #fff;
+      border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 10px; cursor: pointer;
+    }
+    .history-photos-count { font-size: 0.75rem; color: var(--primary); background: var(--primary-light); padding: 4px 8px; border-radius: var(--radius-full); }
+    img.photo-loading { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: photoShimmer 1.2s infinite; }
+    @keyframes photoShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  </style>
+</head>
+<body>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- ================= AUTH VIEW ================= -->
+  <div id="authView" class="container" style="padding-top: 40px;">
+    <div style="text-align: center; margin-bottom: 28px;">
+      <div style="margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+        <img src="logo.png" alt="BodyV Logo" style="width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(22,163,74,0.25));">
+      </div>
+      <h1 style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">BodyV Record</h1>
+      <p style="font-size: 0.88rem; color: #64748b; margin-top: 4px;">ระบบบันทึก & เปรียบเทียบค่าร่างกาย (Google Drive Edition)</p>
+    </div>
+
+    <div class="card">
+      <div class="view-tabs" style="margin-bottom: 20px;">
+        <button id="tabLogin" class="view-tab active" onclick="switchAuthTab('login')">เข้าสู่ระบบ (Login)</button>
+        <button id="tabRegister" class="view-tab" onclick="switchAuthTab('register')">สมัครสมาชิกใหม่</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="formLogin" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">ชื่อผู้ใช้ (Username)</label>
+          <input type="text" id="loginUsername" class="form-control" placeholder="เช่น coach_mike" autocapitalize="none" required autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label">รหัสผ่าน (Password)</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block">เข้าสู่ระบบ</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="formRegister" onsubmit="handleRegister(event)" style="display: none;">
+        <div class="form-group">
+          <label class="form-label">ชื่อ-นามสกุล / ชื่อผู้ฝึกสอน <span class="required">*</span></label>
+          <input type="text" id="regFullName" class="form-control" placeholder="เช่น โค้ชไมค์ เอกชัย" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อผู้ใช้ (Username สำหรับ Login) <span class="required">*</span></label>
+          <input type="text" id="regUsername" class="form-control" placeholder="เช่น coach_mike (ภาษาอังกฤษ/ตัวเลข)" autocapitalize="none" required autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label">รหัสผ่าน (Password) <span class="required">*</span></label>
+          <input type="password" id="regPassword" class="form-control" placeholder="อย่างน้อย 4 ตัวอักษร" required autocomplete="new-password">
+        </div>
+        <button type="submit" id="btnRegSubmit" class="btn btn-primary btn-block">สร้างบัญชีผู้ใช้</button>
+      </form>
+
+      <div style="margin-top: 18px; padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; font-size: 0.78rem; color: #475569; display: flex; gap: 8px; align-items: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>ข้อมูลจัดเก็บลง Google Sheets และรูปภาพลง Google Drive โดยแยกตามบัญชีผู้ใช้อย่างปลอดภัย</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP VIEW ================= -->
+  <div id="appView" style="display: none;">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+          <img src="logo.png" alt="BodyV Logo" style="width: 32px; height: 32px; object-fit: contain;">
+        </div>
+        <div class="brand-title">BodyV <span>Record</span></div>
+      </div>
+      <div class="user-badge" onclick="openProfileModal()">
+        <div class="user-avatar" id="headerUserAvatar">U</div>
+        <span id="headerUserName">ผู้ใช้</span>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- TAB 1: CLIENTS -->
+      <section id="sectionClients" class="tab-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h2 style="font-size: 1.25rem; font-weight: 700;">ลูกค้าทั้งหมด</h2>
+          <button class="btn btn-primary btn-sm" onclick="openAddClientModal()">+ เพิ่มลูกค้าใหม่</button>
+        </div>
+        <div style="margin-bottom: 14px;">
+          <input type="text" id="clientSearchInput" class="form-control" placeholder="🔍 ค้นหาชื่อลูกค้า หรืออาชีพ..." oninput="filterClients()">
+        </div>
+        <div id="clientsList"></div>
+      </section>
+
+      <!-- TAB 2: NEW BODY RECORD -->
+      <section id="sectionNewRecord" class="tab-section" style="display: none;">
+        <div class="card">
+          <div class="card-title">บันทึกค่าร่างกายรอบใหม่</div>
+          <form id="formNewRecord" onsubmit="handleSaveRecord(event)">
+            <div class="form-group">
+              <label class="form-label">เลือกลูกค้า <span class="required">*</span></label>
+              <select id="recordClientId" class="form-control" required onchange="onRecordClientChange()">
+                <option value="">-- เลือกลูกค้า --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่ของข้อมูล <span class="required">*</span></label>
+              <input type="date" id="recordDate" class="form-control" required>
+            </div>
+            <div class="input-row">
+              <div class="form-group">
+                <label class="form-label">ส่วนสูง <span class="required">*</span></label>
+                <div class="input-unit-wrapper">
+                  <input type="number" step="0.1" id="recordHeight" class="form-control" placeholder="170" required inputmode="decimal" oninput="calculateBMIPreview()">
+                  <span class="input-unit">cm</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">น้ำหนัก <span class="required">*</span></label>
+                <div class="input-unit-wrapper">
+                  <input type="number" step="0.1" id="recordWeight" class="form-control" placeholder="68.5" required inputmode="decimal" oninput="calculateBMIPreview()">
+                  <span class="input-unit">กก.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Realtime BMI Badge -->
+            <div id="bmiPreviewBox" style="display: none; margin-bottom: 14px; padding: 10px 14px; background: var(--bg-muted); border-radius: var(--radius-sm); border-left: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">BMI คำนวณอัตโนมัติ:</span>
+                <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary);" id="bmiValueText">--</div>
+              </div>
+              <span id="bmiCategoryBadge" class="badge badge-primary">ปกติ</span>
+            </div>
+
+            <div class="input-row">
+              <div class="form-group">
+                <label class="form-label">% ไขมัน (Fat)</label>
+                <div class="input-unit-wrapper">
+                  <input type="number" step="0.1" id="recordFatPercent" class="form-control" placeholder="18.5" inputmode="decimal">
+                  <span class="input-unit">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">% กล้ามเนื้อ (Muscle)</label>
+                <div class="input-unit-wrapper">
+                  <input type="number" step="0.1" id="recordMusclePercent" class="form-control" placeholder="34.0" inputmode="decimal">
+                  <span class="input-unit">%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="input-row">
+              <div class="form-group">
+                <label class="form-label">Visceral Fat</label>
+                <div class="input-unit-wrapper">
+                  <input type="number" step="0.5" id="recordVisceralFat" class="form-control" placeholder="5" inputmode="decimal">
+                  <span class="input-unit">Level</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">BodyAge (อายุร่างกาย)</label>
+                <div class="input-unit-wrapper">
+                  <input type="number" step="1" id="recordBodyAge" class="form-control" placeholder="28" inputmode="numeric">
+                  <span class="input-unit">ปี</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3 Angle Photos -->
+            <div class="form-group" style="margin-top: 8px;">
+              <label class="form-label" style="display: flex; justify-content: space-between;">
+                <span>รูปถ่ายร่างกาย 3 มุม (ส่งเข้า Google Drive)</span>
+                <span style="font-size: 0.75rem; color: var(--primary);">แตะกล่องเพื่อถ่าย/เลือกรูป</span>
+              </label>
+
+              <div class="photo-grid">
+                <div class="photo-box" id="boxFront" onclick="triggerPhotoSelect('front')">
+                  <input type="file" id="inputPhotoFront" accept="image/*" onchange="handlePhotoUpload(event, 'front')">
+                  <div id="placeholderFront">
+                    <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <div class="angle-tag">ด้านหน้า</div>
+                    <div class="angle-hint">Front View</div>
+                  </div>
+                </div>
+
+                <div class="photo-box" id="boxSideLeft" onclick="triggerPhotoSelect('side_left')">
+                  <input type="file" id="inputPhotoSideLeft" accept="image/*" onchange="handlePhotoUpload(event, 'side_left')">
+                  <div id="placeholderSideLeft">
+                    <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <div class="angle-tag">ด้านข้างซ้าย</div>
+                    <div class="angle-hint">Left Side</div>
+                  </div>
+                </div>
+
+                <div class="photo-box" id="boxSideRight" onclick="triggerPhotoSelect('side_right')">
+                  <input type="file" id="inputPhotoSideRight" accept="image/*" onchange="handlePhotoUpload(event, 'side_right')">
+                  <div id="placeholderSideRight">
+                    <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <div class="angle-tag">ด้านข้างขวา</div>
+                    <div class="angle-hint">Right Side</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">บันทึกเพิ่มเติม (Notes)</label>
+              <textarea id="recordNotes" class="form-control" placeholder="เช่น อาหารการกิน หรือเป้าหมายประจำสัปดาห์"></textarea>
+            </div>
+
+            <button type="submit" id="btnSubmitRecord" class="btn btn-primary btn-block">บันทึกข้อมูลและอัปโหลดเข้า Drive</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 3: COMPARISON -->
+      <section id="sectionCompare" class="tab-section" style="display: none;">
+        <div class="card">
+          <div class="card-title">เปรียบเทียบค่าร่างกาย (Before vs After)</div>
+          <div class="form-group">
+            <label class="form-label">เลือกลูกค้า</label>
+            <select id="compareClientId" class="form-control" onchange="onCompareClientChange()">
+              <option value="">-- เลือกลูกค้าที่ต้องการเปรียบเทียบ --</option>
+            </select>
+          </div>
+          <div class="input-row">
+            <div class="form-group">
+              <label class="form-label">วันที่เริ่มต้น (Before)</label>
+              <select id="compareRecordA" class="form-control">
+                <option value="">-- เลือกรอบที่ 1 --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">วันที่เปรียบเทียบ (After)</label>
+              <select id="compareRecordB" class="form-control">
+                <option value="">-- เลือกรอบที่ 2 --</option>
+              </select>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-block" onclick="executeComparison()">เริ่มเปรียบเทียบผลลัพธ์</button>
+        </div>
+
+        <div id="comparisonResults" style="display: none;">
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="font-size: 1rem; font-weight: 700;">📊 สรุปความเปลี่ยนแปลงสัดส่วน</h3>
+              <span id="compareDateRangeBadge" class="badge badge-primary">--</span>
+            </div>
+            <div class="compare-stat-grid" id="compareStatsGrid"></div>
+          </div>
+
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="font-size: 1rem; font-weight: 700;">📸 เปรียบเทียบภาพถ่าย 3 มุม</h3>
+              <div style="display: flex; gap: 4px;">
+                <button id="btnModeSide" class="btn btn-sm btn-primary" onclick="setCompareMode('side')">ประกบคู่</button>
+                <button id="btnModeSlider" class="btn btn-sm btn-secondary" onclick="setCompareMode('slider')">สไลเดอร์</button>
+              </div>
+            </div>
+
+            <div class="view-tabs">
+              <button id="btnAngleFront" class="view-tab active" onclick="setCompareAngle('front')">รูปด้านหน้า</button>
+              <button id="btnAngleLeft" class="view-tab" onclick="setCompareAngle('side_left')">ด้านข้างซ้าย</button>
+              <button id="btnAngleRight" class="view-tab" onclick="setCompareAngle('side_right')">ด้านข้างขวา</button>
+            </div>
+
+            <!-- Side by Side -->
+            <div id="compareViewSide">
+              <div class="compare-photos-side">
+                <div class="compare-photo-col">
+                  <div class="compare-photo-header badge-warning" id="lblPhotoA">Before</div>
+                  <div class="compare-photo-img-wrap" id="wrapPhotoA"></div>
+                </div>
+                <div class="compare-photo-col">
+                  <div class="compare-photo-header badge-success" id="lblPhotoB">After</div>
+                  <div class="compare-photo-img-wrap" id="wrapPhotoB"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slider -->
+            <div id="compareViewSlider" style="display: none;">
+              <div class="slider-container" id="splitSliderBox">
+                <img id="sliderImgBefore" class="slider-img" src="" alt="Before">
+                <div class="slider-img-after" id="sliderAfterWrapper">
+                  <img id="sliderImgAfter" src="" alt="After">
+                </div>
+                <div class="slider-divider" id="sliderDivider">
+                  <div class="slider-handle">⇄</div>
+                </div>
+                <span class="slider-label slider-label-before" id="sliderBadgeBefore">ก่อน</span>
+                <span class="slider-label slider-label-after" id="sliderBadgeAfter">หลัง</span>
+              </div>
+              <p style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+                👆 ลากเส้นแบ่งสีขาวเพื่อเปรียบเทียบรูปก่อน-หลังในตำแหน่งเดียวกัน
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CLIENT DETAIL -->
+      <section id="sectionClientDetail" class="tab-section" style="display: none;">
+        <div class="card" id="clientProfileCard"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="font-size: 1.05rem; font-weight: 700;">📅 ประวัติบันทึกร่างกาย</h3>
+          <button class="btn btn-primary btn-sm" onclick="navigateToNewRecordForCurrentClient()">+ บันทึกรอบใหม่</button>
+        </div>
+        <div id="clientRecordsList"></div>
+      </section>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" id="navClients" onclick="switchNavTab('clients')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <span>ลูกค้า</span>
+      </button>
+      <button class="nav-item" id="navNewRecord" onclick="switchNavTab('newRecord')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>บันทึกใหม่</span>
+      </button>
+      <button class="nav-item" id="navCompare" onclick="switchNavTab('compare')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        <span>เปรียบเทียบ</span>
+      </button>
+      <button class="nav-item" id="navProfile" onclick="openProfileModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>บัญชีผู้ใช้</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Modals -->
+  <div id="modalAddClient" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">เพิ่มข้อมูลลูกค้าใหม่</h3>
+        <button class="modal-close" onclick="closeModal('modalAddClient')">✕</button>
+      </div>
+      <form id="formAddClient" onsubmit="handleSaveClient(event)">
+        <div class="form-group">
+          <label class="form-label">ชื่อ-นามสกุล <span class="required">*</span></label>
+          <input type="text" id="newClientName" class="form-control" placeholder="เช่น คุณสมชาย รักสุขภาพ" required>
+        </div>
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">วันเดือนปีเกิด</label>
+            <input type="date" id="newClientDob" class="form-control" onchange="calculateAgeFromDob('newClientDob', 'newClientAge')">
+          </div>
+          <div class="form-group">
+            <label class="form-label">อายุ (ปี)</label>
+            <input type="number" id="newClientAge" class="form-control" placeholder="เช่น 32" inputmode="numeric">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">เพศ</label>
+            <select id="newClientGender" class="form-control">
+              <option value="male">ชาย</option>
+              <option value="female">หญิง</option>
+              <option value="other">ไม่ระบุ / อื่นๆ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">อาชีพ</label>
+            <input type="text" id="newClientOccupation" class="form-control" placeholder="เช่น วิศวกร, พนักงานออฟฟิศ">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">เบอร์โทรศัพท์</label>
+          <input type="tel" id="newClientPhone" class="form-control" placeholder="08x-xxx-xxxx">
+        </div>
+        <div class="form-group">
+          <label class="form-label">เป้าหมาย / หมายเหตุ</label>
+          <textarea id="newClientNotes" class="form-control" placeholder="เช่น ต้องการลดไขมัน 5 กก."></textarea>
+        </div>
+        <button type="submit" id="btnAddClientSubmit" class="btn btn-primary btn-block">บันทึกข้อมูลลูกค้า</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalRecordDetail" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="recDetailTitle">รายละเอียดค่าร่างกาย</h3>
+        <button class="modal-close" onclick="closeModal('modalRecordDetail')">✕</button>
+      </div>
+      <div id="recDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal Edit Record -->
+  <div id="modalEditRecord" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ แก้ไขบันทึกค่าร่างกาย</h3>
+        <button class="modal-close" onclick="closeModal('modalEditRecord')">✕</button>
+      </div>
+      <form id="formEditRecord" onsubmit="handleUpdateRecord(event)">
+        <input type="hidden" id="editRecordId">
+        <div class="form-group">
+          <label class="form-label">วันที่ของข้อมูล <span class="required">*</span></label>
+          <input type="date" id="editRecordDate" class="form-control" required>
+        </div>
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">ส่วนสูง <span class="required">*</span></label>
+            <div class="input-unit-wrapper">
+              <input type="number" step="0.1" id="editRecordHeight" class="form-control" required inputmode="decimal" oninput="calculateEditBMIPreview()">
+              <span class="input-unit">cm</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">น้ำหนัก <span class="required">*</span></label>
+            <div class="input-unit-wrapper">
+              <input type="number" step="0.1" id="editRecordWeight" class="form-control" required inputmode="decimal" oninput="calculateEditBMIPreview()">
+              <span class="input-unit">กก.</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="editBmiPreviewBox" style="margin-bottom: 14px; padding: 10px 14px; background: var(--bg-muted); border-radius: var(--radius-sm); border-left: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">BMI คำนวณอัตโนมัติ:</span>
+            <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary);" id="editBmiValueText">--</div>
+          </div>
+          <span id="editBmiCategoryBadge" class="badge badge-primary">ปกติ</span>
+        </div>
+
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">% ไขมัน (Fat)</label>
+            <div class="input-unit-wrapper">
+              <input type="number" step="0.1" id="editRecordFatPercent" class="form-control" placeholder="18.5" inputmode="decimal">
+              <span class="input-unit">%</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">% กล้ามเนื้อ (Muscle)</label>
+            <div class="input-unit-wrapper">
+              <input type="number" step="0.1" id="editRecordMusclePercent" class="form-control" placeholder="34.0" inputmode="decimal">
+              <span class="input-unit">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">Visceral Fat</label>
+            <div class="input-unit-wrapper">
+              <input type="number" step="0.5" id="editRecordVisceralFat" class="form-control" placeholder="5" inputmode="decimal">
+              <span class="input-unit">Level</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">BodyAge (อายุร่างกาย)</label>
+            <div class="input-unit-wrapper">
+              <input type="number" step="1" id="editRecordBodyAge" class="form-control" placeholder="28" inputmode="numeric">
+              <span class="input-unit">ปี</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">บันทึกเพิ่มเติม (Notes)</label>
+          <textarea id="editRecordNotes" class="form-control"></textarea>
+        </div>
+
+        <button type="submit" id="btnUpdateRecordSubmit" class="btn btn-primary btn-block">💾 บันทึกการแก้ไข</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalProfile" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">บัญชีผู้ใช้งาน</h3>
+        <button class="modal-close" onclick="closeModal('modalProfile')">✕</button>
+      </div>
+      <div style="text-align: center; padding: 12px 0 20px;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: #2563eb; color: #fff; font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+          <span id="profileAvatarText">U</span>
+        </div>
+        <h4 id="profileFullNameText" style="font-size: 1.15rem; font-weight: 700;">--</h4>
+        <p id="profileUsernameText" style="font-size: 0.85rem; color: var(--text-muted);">@--</p>
+      </div>
+      <div class="card" style="background: var(--bg-muted); margin-bottom: 16px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+        <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">☁️ Google Drive & Sheets Integration</div>
+        ข้อมูลสัดส่วนทั้งหมดถูกบันทึกที่ Google Sheets และรูปภาพทั้งหมดถูกเก็บไว้ที่ Google Drive ในโฟลเดอร์ <b>BodyTrack_Photos</b> ของบัญชีคุณ
+      </div>
+      <button class="btn btn-danger btn-block" onclick="handleLogout()">ออกจากระบบ (Logout)</button>
+    </div>
+  </div>
+
+  <!-- Client-side Logic -->
+  <script>
+    // Safe Storage Helper for Incognito & iframes
+    function getStoredToken() {
+      try { return localStorage.getItem("bodytrack_gas_token") || null; } catch (e) { return null; }
+    }
+    function setStoredToken(val) {
+      try {
+        if (val) localStorage.setItem("bodytrack_gas_token", val);
+        else localStorage.removeItem("bodytrack_gas_token");
+      } catch (e) {}
+    }
+
+    // State
+    const state = {
+      currentUser: null,
+      authToken: getStoredToken(),
+      clients: [],
+      selectedClient: null,
+      clientRecords: [],
+      photos: { front: null, side_left: null, side_right: null },
+      compareData: null,
+      currentCompareMode: "side",
+      currentCompareAngle: "front"
+    };
+
+    // ===== ตั้งค่า: URL ของ Web App (Apps Script) =====
+    const API_URL = "https://script.google.com/macros/s/AKfycbzBJl6odSwNcWIhx_WuIz0G9_T1C_7chiHlhkdgCAlTFUHGCxTWTwxWS4tCknNPqFN0/exec";
+
+    // เรียก API บน Apps Script (ส่งแบบ text/plain เพื่อเลี่ยงปัญหา CORS)
+    async function runGas(fnName, ...args) {
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ fn: fnName, args })
+      });
+      if (!resp.ok) throw new Error("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (" + resp.status + ")");
+      const out = await resp.json();
+      if (!out.ok) throw new Error(out.error || "เกิดข้อผิดพลาด");
+      return out.result;
+    }
+
+    // ===== รูปภาพส่วนตัว: โหลดผ่าน API พร้อมกันหลายรูป + จำไว้ไม่โหลดซ้ำ =====
+    const photoCache = new Map();
+    function loadPhoto(id) {
+      if (!photoCache.has(id)) {
+        const p = runGas("apiGetPhoto", state.authToken, id).then(r => {
+          if (!r || !r.success) throw new Error((r && r.error) || "โหลดรูปไม่สำเร็จ");
+          return r.data;
+        });
+        p.catch(() => photoCache.delete(id));
+        photoCache.set(id, p);
+      }
+      return photoCache.get(id);
+    }
+    function photoImg(id) {
+      return `<img data-photo-id="${String(id).replace(/[^A-Za-z0-9_-]/g, "")}" class="photo-loading" alt="">`;
+    }
+    function hydratePhotos(root) {
+      if (!root) return;
+      root.querySelectorAll("img[data-photo-id]").forEach(img => {
+        const id = img.dataset.photoId;
+        img.removeAttribute("data-photo-id");
+        loadPhoto(id)
+          .then(src => { img.src = src; img.classList.remove("photo-loading"); })
+          .catch(() => { img.classList.remove("photo-loading"); img.alt = "โหลดรูปไม่สำเร็จ"; });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split("T")[0];
+      const dateInput = document.getElementById("recordDate");
+      if (dateInput) dateInput.value = today;
+
+      initSliderInteractions();
+      checkAuth();
+    });
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type === "error" ? "toast-error" : type === "success" ? "toast-success" : ""}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    async function checkAuth() {
+      if (!state.authToken) {
+        showAuthView();
+        return;
+      }
+      try {
+        const res = await runGas("apiCheckAuth", state.authToken);
+        if (res.authenticated && res.user) {
+          state.currentUser = res.user;
+          showAppView();
+          loadClients();
+        } else {
+          logoutClean();
+        }
+      } catch (e) {
+        logoutClean();
+      }
+    }
+
+    function showAuthView() {
+      document.getElementById("authView").style.display = "block";
+      document.getElementById("appView").style.display = "none";
+    }
+
+    function showAppView() {
+      document.getElementById("authView").style.display = "none";
+      document.getElementById("appView").style.display = "block";
+      const u = state.currentUser;
+      if (u) {
+        document.getElementById("headerUserName").textContent = u.full_name || u.username;
+        document.getElementById("headerUserAvatar").textContent = (u.full_name || u.username).charAt(0).toUpperCase();
+        document.getElementById("profileFullNameText").textContent = u.full_name || u.username;
+        document.getElementById("profileUsernameText").textContent = `@${u.username}`;
+        document.getElementById("profileAvatarText").textContent = (u.full_name || u.username).charAt(0).toUpperCase();
+      }
+    }
+
+    function switchAuthTab(mode) {
+      document.getElementById("tabLogin").classList.toggle("active", mode === "login");
+      document.getElementById("tabRegister").classList.toggle("active", mode === "register");
+      document.getElementById("formLogin").style.display = mode === "login" ? "block" : "none";
+      document.getElementById("formRegister").style.display = mode === "register" ? "block" : "none";
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnLoginSubmit");
+      btn.disabled = true;
+      btn.textContent = "กำลังเข้าสู่ระบบ...";
+
+      const u = document.getElementById("loginUsername").value.trim();
+      const p = document.getElementById("loginPassword").value;
+
+      try {
+        const res = await runGas("apiLogin", u, p);
+        if (!res.success) throw new Error(res.error);
+
+        state.authToken = res.token;
+        setStoredToken(res.token);
+        state.currentUser = res.user;
+        showToast(`ยินดีต้อนรับคุณ ${res.user.full_name}!`, "success");
+        showAppView();
+        loadClients();
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "เข้าสู่ระบบ";
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnRegSubmit");
+      btn.disabled = true;
+      btn.textContent = "กำลังลงทะเบียน...";
+
+      const fn = document.getElementById("regFullName").value.trim();
+      const u = document.getElementById("regUsername").value.trim();
+      const p = document.getElementById("regPassword").value;
+
+      try {
+        const res = await runGas("apiRegister", fn, u, p);
+        if (!res.success) throw new Error(res.error);
+
+        state.authToken = res.token;
+        setStoredToken(res.token);
+        state.currentUser = res.user;
+        showToast("สร้างบัญชีสำเร็จ!", "success");
+        showAppView();
+        loadClients();
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "สร้างบัญชีผู้ใช้";
+      }
+    }
+
+    function handleLogout() {
+      logoutClean();
+      closeModal("modalProfile");
+      showToast("ออกจากระบบแล้ว", "info");
+    }
+
+    function logoutClean() {
+      if (state.authToken) runGas("apiLogout", state.authToken).catch(() => {});
+      photoCache.clear();
+      state.authToken = null;
+      state.currentUser = null;
+      setStoredToken(null);
+      showAuthView();
+    }
+
+    function switchNavTab(tabName) {
+      ["clients", "newRecord", "compare"].forEach(t => {
+        const btn = document.getElementById(`nav${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (btn) btn.classList.toggle("active", t === tabName);
+      });
+      document.getElementById("sectionClients").style.display = tabName === "clients" ? "block" : "none";
+      document.getElementById("sectionNewRecord").style.display = tabName === "newRecord" ? "block" : "none";
+      document.getElementById("sectionCompare").style.display = tabName === "compare" ? "block" : "none";
+      document.getElementById("sectionClientDetail").style.display = "none";
+
+      if (tabName === "clients") loadClients();
+      else populateClientDropdowns();
+    }
+
+    async function loadClients() {
+      try {
+        const res = await runGas("apiGetClients", state.authToken);
+        state.clients = (res && res.clients) ? res.clients : [];
+        renderClientsList(state.clients);
+        populateClientDropdowns();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    function filterClients() {
+      const q = document.getElementById("clientSearchInput").value.trim().toLowerCase();
+      if (!q) return renderClientsList(state.clients);
+      renderClientsList(state.clients.filter(c =>
+        (c.name && c.name.toLowerCase().includes(q)) || (c.occupation && c.occupation.toLowerCase().includes(q))
+      ));
+    }
+
+    function renderClientsList(clients) {
+      const container = document.getElementById("clientsList");
+      if (!clients || clients.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-title">ยังไม่มีรายชื่อลูกค้า</div><p style="font-size:0.85rem;">กดปุ่ม "+ เพิ่มลูกค้าใหม่" เพื่อเริ่มบันทึก</p></div>`;
+        return;
+      }
+      container.innerHTML = clients.map(c => `
+        <div class="card" style="margin-bottom:12px; cursor:pointer;" onclick="viewClientDetail(${c.id})">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <h3 style="font-size:1.05rem; font-weight:700;">${escapeHtml(c.name)}</h3>
+                <span class="badge ${c.gender === 'male' ? 'badge-primary' : c.gender === 'female' ? 'badge-warning' : 'badge-secondary'}">${c.gender === 'male' ? 'ชาย' : c.gender === 'female' ? 'หญิง' : 'ไม่ระบุ'}</span>
+              </div>
+              <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
+                ${c.occupation ? `<span>💼 ${escapeHtml(c.occupation)}</span> • ` : ''}
+                <span>${c.age ? `อายุ ${c.age} ปี` : ''}</span>
+              </div>
+            </div>
+            <span class="history-photos-count">${c.record_count} บันทึก</span>
+          </div>
+          <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-muted);">
+            <span>📅 ${c.last_record_date ? `ล่าสุด: ${c.last_record_date}` : 'ยังไม่มีบันทึก'}</span>
+            <span style="color:var(--primary); font-weight:600;">ดูประวัติ →</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function populateClientDropdowns() {
+      const recordSelect = document.getElementById("recordClientId");
+      const compareSelect = document.getElementById("compareClientId");
+      const opts = '<option value="">-- เลือกลูกค้า --</option>' + state.clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+      if (recordSelect) recordSelect.innerHTML = opts;
+      if (compareSelect) compareSelect.innerHTML = opts;
+    }
+
+    function openAddClientModal() {
+      document.getElementById("formAddClient").reset();
+      openModal("modalAddClient");
+    }
+
+    function calculateAgeFromDob(dobId, ageId) {
+      const d = document.getElementById(dobId).value;
+      if (!d) return;
+      const b = new Date(d);
+      const diff = Date.now() - b.getTime();
+      const age = Math.abs(new Date(diff).getUTCFullYear() - 1970);
+      if (age >= 0 && age < 120) document.getElementById(ageId).value = age;
+    }
+
+    async function handleSaveClient(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnAddClientSubmit");
+      btn.disabled = true;
+      btn.textContent = "กำลังบันทึก...";
+
+      const data = {
+        name: document.getElementById("newClientName").value.trim(),
+        dob: document.getElementById("newClientDob").value,
+        age: document.getElementById("newClientAge").value,
+        gender: document.getElementById("newClientGender").value,
+        occupation: document.getElementById("newClientOccupation").value.trim(),
+        phone: document.getElementById("newClientPhone").value.trim(),
+        notes: document.getElementById("newClientNotes").value.trim()
+      };
+
+      try {
+        const res = await runGas("apiAddClient", state.authToken, data);
+        if (!res.success) throw new Error(res.error);
+        closeModal("modalAddClient");
+        showToast("เพิ่มข้อมูลลูกค้าสำเร็จ!", "success");
+        await loadClients();
+        if (res.client_id) viewClientDetail(res.client_id);
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "บันทึกข้อมูลลูกค้า";
+      }
+    }
+
+    async function viewClientDetail(clientId) {
+      try {
+        const res = await runGas("apiGetClientRecords", state.authToken, clientId);
+        if (!res.success) throw new Error(res.error);
+
+        state.selectedClient = res.client;
+        state.clientRecords = res.records;
+
+        document.getElementById("sectionClients").style.display = "none";
+        document.getElementById("sectionNewRecord").style.display = "none";
+        document.getElementById("sectionCompare").style.display = "none";
+        document.getElementById("sectionClientDetail").style.display = "block";
+
+        renderClientProfileHeader(res.client);
+        renderClientRecordsTimeline(res.records);
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    function renderClientProfileHeader(c) {
+      document.getElementById("clientProfileCard").innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <h2 style="font-size:1.25rem; font-weight:800;">${escapeHtml(c.name)}</h2>
+            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
+              ${c.age ? `อายุ ${c.age} ปี` : ''} ${c.dob ? `(เกิด ${c.dob})` : ''} ${c.occupation ? `• อาชีพ: ${escapeHtml(c.occupation)}` : ''}
+            </div>
+            ${c.phone ? `<div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">📞 ${escapeHtml(c.phone)}</div>` : ''}
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="switchNavTab('clients')">← กลับ</button>
+            <button class="btn btn-danger btn-sm" onclick="handleDeleteClient(${c.id}, '${escapeHtml(c.name)}')">🗑️ ลบ</button>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;">
+          <button class="btn btn-primary btn-sm" onclick="navigateToNewRecordForCurrentClient()">➕ บันทึกค่าร่างกาย</button>
+          <button class="btn btn-secondary btn-sm" onclick="navigateToCompareForCurrentClient()">⚖️ เปรียบเทียบข้อมูล</button>
+        </div>
+      `;
+    }
+
+    function renderClientRecordsTimeline(records) {
+      const container = document.getElementById("clientRecordsList");
+      if (!records || records.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-state-title">ยังไม่มีบันทึกข้อมูล</div><p style="font-size:0.85rem;">กดปุ่ม "+ บันทึกรอบใหม่" เพื่อเริ่มบันทึก</p></div>`;
+        return;
+      }
+      container.innerHTML = records.map(r => {
+        let pCount = (r.photo_front ? 1 : 0) + (r.photo_side_left ? 1 : 0) + (r.photo_side_right ? 1 : 0);
+        return `
+          <div class="history-item" onclick="openRecordDetailModal(${r.id})">
+            <div>
+              <div style="font-weight:700;">📅 ${r.record_date}</div>
+              <div style="display:flex; gap:10px; font-size:0.8rem; color:var(--text-muted); margin-top:4px;">
+                <span>⚖️ <b>${r.weight}</b> กก.</span>
+                <span>📏 <b>${r.height}</b> cm</span>
+                ${r.bmi ? `<span>BMI <b>${r.bmi}</b></span>` : ''}
+                ${r.fat_percent ? `<span>ไขมัน <b>${r.fat_percent}%</b></span>` : ''}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              ${pCount > 0 ? `<span class="history-photos-count">📸 ${pCount} รูป</span>` : '<span style="font-size:0.75rem; color:#94a3b8;">ไม่มีรูป</span>'}
+              <div style="font-size:0.75rem; color:var(--primary); font-weight:600; margin-top:4px;">ดูรายละเอียด →</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function navigateToNewRecordForCurrentClient() {
+      if (state.selectedClient) {
+        switchNavTab("newRecord");
+        document.getElementById("recordClientId").value = state.selectedClient.id;
+      }
+    }
+
+    function navigateToCompareForCurrentClient() {
+      if (state.selectedClient) {
+        switchNavTab("compare");
+        document.getElementById("compareClientId").value = state.selectedClient.id;
+        onCompareClientChange();
+      }
+    }
+
+    function calculateBMIPreview() {
+      const h = parseFloat(document.getElementById("recordHeight").value);
+      const w = parseFloat(document.getElementById("recordWeight").value);
+      const box = document.getElementById("bmiPreviewBox");
+      if (h > 50 && w > 20) {
+        const bmi = (w / ((h / 100) * (h / 100))).toFixed(1);
+        box.style.display = "flex";
+        document.getElementById("bmiValueText").textContent = bmi;
+        const badge = document.getElementById("bmiCategoryBadge");
+        if (bmi < 18.5) { badge.textContent = "ผอม"; badge.className = "badge badge-warning"; }
+        else if (bmi < 23) { badge.textContent = "สมส่วน"; badge.className = "badge badge-success"; }
+        else if (bmi < 25) { badge.textContent = "ท้วม"; badge.className = "badge badge-warning"; }
+        else { badge.textContent = "อ้วน"; badge.className = "badge badge-danger"; }
+      } else {
+        box.style.display = "none";
+      }
+    }
+
+    function onRecordClientChange() {
+      const cid = document.getElementById("recordClientId").value;
+      if (!cid) return;
+      runGas("apiGetClientRecords", state.authToken, cid).then(res => {
+        if (res.records && res.records.length > 0 && res.records[0].height) {
+          document.getElementById("recordHeight").value = res.records[0].height;
+          calculateBMIPreview();
+        }
+      }).catch(() => {});
+    }
+
+    // Photo Compression via Canvas
+    function triggerPhotoSelect(angle) {
+      document.getElementById(angle === "front" ? "inputPhotoFront" : angle === "side_left" ? "inputPhotoSideLeft" : "inputPhotoSideRight").click();
+    }
+
+    async function handlePhotoUpload(e, angle) {
+      const file = e.target.files[0];
+      if (!file) return;
+      showToast("กำลังย่อขนาดรูปภาพ...", "info");
+      try {
+        const base64 = await resizeAndCompressImage(file, 800, 0.75);
+        state.photos[angle] = base64;
+        renderPhotoPreview(angle, base64);
+        showToast("เตรียมรูปภาพพร้อมบันทึก", "success");
+      } catch (err) {
+        showToast("ไม่สามารถประมวลผลรูปภาพได้", "error");
+      }
+    }
+
+    function resizeAndCompressImage(file, maxDim = 800, quality = 0.75) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            let w = img.width, h = img.height;
+            if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+            const canvas = document.createElement("canvas");
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderPhotoPreview(angle, base64) {
+      const box = document.getElementById(angle === "front" ? "boxFront" : angle === "side_left" ? "boxSideLeft" : "boxSideRight");
+      const placeholder = document.getElementById(angle === "front" ? "placeholderFront" : angle === "side_left" ? "placeholderSideLeft" : "placeholderSideRight");
+      const oldImg = box.querySelector(".photo-preview");
+      const oldBtn = box.querySelector(".photo-remove-btn");
+      if (oldImg) oldImg.remove();
+      if (oldBtn) oldBtn.remove();
+
+      if (base64) {
+        placeholder.style.display = "none";
+        const img = document.createElement("img");
+        img.src = base64;
+        img.className = "photo-preview";
+        box.appendChild(img);
+        const btn = document.createElement("button");
+        btn.className = "photo-remove-btn";
+        btn.textContent = "✕";
+        btn.onclick = ev => { ev.stopPropagation(); removePhoto(angle); };
+        box.appendChild(btn);
+      } else {
+        placeholder.style.display = "block";
+      }
+    }
+
+    function removePhoto(angle) {
+      state.photos[angle] = null;
+      document.getElementById(angle === "front" ? "inputPhotoFront" : angle === "side_left" ? "inputPhotoSideLeft" : "inputPhotoSideRight").value = "";
+      renderPhotoPreview(angle, null);
+    }
+
+    async function handleSaveRecord(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSubmitRecord");
+      btn.disabled = true;
+      btn.textContent = "กำลังอัปโหลดรูปและบันทึกเข้า Drive...";
+
+      const payload = {
+        client_id: document.getElementById("recordClientId").value,
+        record_date: document.getElementById("recordDate").value,
+        height: document.getElementById("recordHeight").value,
+        weight: document.getElementById("recordWeight").value,
+        fat_percent: document.getElementById("recordFatPercent").value,
+        muscle_percent: document.getElementById("recordMusclePercent").value,
+        visceral_fat: document.getElementById("recordVisceralFat").value,
+        body_age: document.getElementById("recordBodyAge").value,
+        notes: document.getElementById("recordNotes").value,
+        photo_front: state.photos.front,
+        photo_side_left: state.photos.side_left,
+        photo_side_right: state.photos.side_right
+      };
+
+      try {
+        const res = await runGas("apiSaveRecord", state.authToken, payload);
+        if (!res.success) throw new Error(res.error);
+        showToast("บันทึกข้อมูลและส่งรูปเข้า Google Drive แล้ว!", "success");
+        document.getElementById("formNewRecord").reset();
+        removePhoto("front"); removePhoto("side_left"); removePhoto("side_right");
+        await loadClients();
+        viewClientDetail(payload.client_id);
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "บันทึกข้อมูลและอัปโหลดเข้า Drive";
+      }
+    }
+
+    // Comparison Engine
+    async function onCompareClientChange() {
+      const cid = document.getElementById("compareClientId").value;
+      const sA = document.getElementById("compareRecordA");
+      const sB = document.getElementById("compareRecordB");
+      sA.innerHTML = '<option value="">-- เลือกรอบที่ 1 --</option>';
+      sB.innerHTML = '<option value="">-- เลือกรอบที่ 2 --</option>';
+      document.getElementById("comparisonResults").style.display = "none";
+      if (!cid) return;
+
+      try {
+        const res = await runGas("apiGetClientRecords", state.authToken, cid);
+        const recs = res.records || [];
+        recs.forEach(r => {
+          const opt = `<option value="${r.id}">${r.record_date} (น้ำหนัก ${r.weight} กก.)</option>`;
+          sA.innerHTML += opt;
+          sB.innerHTML += opt;
+        });
+        if (recs.length >= 2) {
+          sA.value = recs[recs.length - 1].id;
+          sB.value = recs[0].id;
+        }
+      } catch (e) {}
+    }
+
+    async function executeComparison() {
+      const cid = document.getElementById("compareClientId").value;
+      const rA = document.getElementById("compareRecordA").value;
+      const rB = document.getElementById("compareRecordB").value;
+      if (!cid || !rA || !rB) return showToast("กรุณาเลือกลูกค้าและทั้ง 2 วันที่ต้องการเปรียบเทียบ", "error");
+      if (rA === rB) return showToast("กรุณาเลือกวันที่แตกต่างกัน", "warning");
+
+      showToast("กำลังประมวลผลข้อมูลเปรียบเทียบ...", "info");
+      try {
+        const res = await runGas("apiCompareRecords", state.authToken, cid, rA, rB);
+        if (!res.success) throw new Error(res.error);
+        state.compareData = res;
+        renderComparisonView(res);
+        document.getElementById("comparisonResults").style.display = "block";
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    function renderComparisonView(data) {
+      const { record_a, record_b, diff } = data;
+      document.getElementById("compareDateRangeBadge").textContent = `${record_a.record_date} ➔ ${record_b.record_date}`;
+
+      const grid = document.getElementById("compareStatsGrid");
+      const makeCard = (title, vA, vB, dVal, unit, lowerIsBetter = true) => {
+        let diffBadge = "";
+        if (dVal != null) {
+          const sign = dVal > 0 ? "+" : "";
+          const isGood = lowerIsBetter ? dVal < 0 : dVal > 0;
+          const arrow = dVal < 0 ? "↓" : dVal > 0 ? "↑" : "=";
+          diffBadge = `<span class="stat-diff-pill badge ${dVal === 0 ? 'badge-secondary' : isGood ? 'badge-success' : 'badge-danger'}">${arrow} ${sign}${dVal} ${unit}</span>`;
+        }
+        return `
+          <div class="stat-card">
+            <div class="stat-card-title"><span>${title}</span></div>
+            <div class="stat-card-values">
+              <span class="stat-card-before">${vA || '--'}</span>
+              <span class="stat-card-after">${vB || '--'}</span>
+            </div>
+            ${diffBadge}
+          </div>
+        `;
+      };
+
+      grid.innerHTML = [
+        makeCard("น้ำหนัก (Weight)", record_a.weight, record_b.weight, diff.weight, "กก.", true),
+        makeCard("BMI (ดัชนีมวลกาย)", record_a.bmi, record_b.bmi, diff.bmi, "", true),
+        makeCard("% ไขมัน (Body Fat)", record_a.fat_percent, record_b.fat_percent, diff.fat_percent, "%", true),
+        makeCard("% กล้ามเนื้อ (Muscle)", record_a.muscle_percent, record_b.muscle_percent, diff.muscle_percent, "%", false),
+        makeCard("Visceral Fat", record_a.visceral_fat, record_b.visceral_fat, diff.visceral_fat, "Level", true),
+        makeCard("Body Age (อายุร่างกาย)", record_a.body_age, record_b.body_age, diff.body_age, "ปี", true)
+      ].join("");
+
+      document.getElementById("lblPhotoA").textContent = `ก่อน: ${record_a.record_date}`;
+      document.getElementById("lblPhotoB").textContent = `หลัง: ${record_b.record_date}`;
+      document.getElementById("sliderBadgeBefore").textContent = `ก่อน: ${record_a.record_date}`;
+      document.getElementById("sliderBadgeAfter").textContent = `หลัง: ${record_b.record_date}`;
+
+      updateComparisonPhotos();
+    }
+
+    function setCompareAngle(angle) {
+      state.currentCompareAngle = angle;
+      document.getElementById("btnAngleFront").classList.toggle("active", angle === "front");
+      document.getElementById("btnAngleLeft").classList.toggle("active", angle === "side_left");
+      document.getElementById("btnAngleRight").classList.toggle("active", angle === "side_right");
+      updateComparisonPhotos();
+    }
+
+    function setCompareMode(mode) {
+      state.currentCompareMode = mode;
+      document.getElementById("btnModeSide").className = mode === "side" ? "btn btn-sm btn-primary" : "btn btn-sm btn-secondary";
+      document.getElementById("btnModeSlider").className = mode === "slider" ? "btn btn-sm btn-primary" : "btn btn-sm btn-secondary";
+      document.getElementById("compareViewSide").style.display = mode === "side" ? "block" : "none";
+      document.getElementById("compareViewSlider").style.display = mode === "slider" ? "block" : "none";
+      updateComparisonPhotos();
+    }
+
+    function updateComparisonPhotos() {
+      if (!state.compareData) return;
+      const { record_a, record_b } = state.compareData;
+      const key = state.currentCompareAngle === "front" ? "photo_front" : state.currentCompareAngle === "side_left" ? "photo_side_left" : "photo_side_right";
+      const uA = record_a[key];
+      const uB = record_b[key];
+
+      document.getElementById("wrapPhotoA").innerHTML = uA ? photoImg(uA) : `<div style="color:#64748b; font-size:0.75rem; display:flex; align-items:center; justify-content:center; height:100%;">ไม่มีรูปใน Drive</div>`;
+      document.getElementById("wrapPhotoB").innerHTML = uB ? photoImg(uB) : `<div style="color:#64748b; font-size:0.75rem; display:flex; align-items:center; justify-content:center; height:100%;">ไม่มีรูปใน Drive</div>`;
+
+      hydratePhotos(document.getElementById("wrapPhotoA"));
+      hydratePhotos(document.getElementById("wrapPhotoB"));
+
+      const imgBefore = document.getElementById("sliderImgBefore");
+      const imgAfter = document.getElementById("sliderImgAfter");
+      const reqKey = `${uA}|${uB}`;
+      state.sliderReq = reqKey;
+      imgBefore.removeAttribute("src");
+      imgAfter.removeAttribute("src");
+      if (uA && uB) {
+        Promise.all([loadPhoto(uA), loadPhoto(uB)]).then(([a, b]) => {
+          if (state.sliderReq !== reqKey) return; // ผู้ใช้เปลี่ยนมุมไปแล้ว
+          imgBefore.src = a;
+          imgAfter.src = b;
+        }).catch(() => showToast("โหลดรูปไม่สำเร็จ", "error"));
+      }
+    }
+
+    function initSliderInteractions() {
+      const box = document.getElementById("splitSliderBox");
+      const div = document.getElementById("sliderDivider");
+      const wrap = document.getElementById("sliderAfterWrapper");
+      let dragging = false;
+
+      const setPos = (clientX) => {
+        const rect = box.getBoundingClientRect();
+        let x = clientX - rect.left;
+        if (x < 0) x = 0;
+        if (x > rect.width) x = rect.width;
+        const p = (x / rect.width) * 100;
+        div.style.left = `${p}%`;
+        wrap.style.width = `${p}%`;
+      };
+
+      div.addEventListener("mousedown", () => dragging = true);
+      window.addEventListener("mouseup", () => dragging = false);
+      window.addEventListener("mousemove", e => { if (dragging) setPos(e.clientX); });
+
+      div.addEventListener("touchstart", () => dragging = true, { passive: true });
+      window.addEventListener("touchend", () => dragging = false);
+      window.addEventListener("touchmove", e => { if (dragging) setPos(e.touches[0].clientX); }, { passive: true });
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("open"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+    function openProfileModal() { openModal("modalProfile"); }
+
+    function openRecordDetailModal(recId) {
+      const r = state.clientRecords.find(x => x.id == recId);
+      if (!r) return;
+      document.getElementById("recDetailTitle").textContent = `ข้อมูลวันที่ ${r.record_date}`;
+      document.getElementById("recDetailContent").innerHTML = `
+        <div class="compare-stat-grid" style="margin-bottom:14px;">
+          <div class="stat-card"><div class="stat-card-title">น้ำหนัก</div><div class="stat-card-after">${r.weight} กก.</div></div>
+          <div class="stat-card"><div class="stat-card-title">ส่วนสูง</div><div class="stat-card-after">${r.height} cm</div></div>
+          <div class="stat-card"><div class="stat-card-title">BMI</div><div class="stat-card-after">${r.bmi || '--'}</div></div>
+          <div class="stat-card"><div class="stat-card-title">% ไขมัน</div><div class="stat-card-after">${r.fat_percent ? r.fat_percent + '%' : '--'}</div></div>
+          <div class="stat-card"><div class="stat-card-title">% กล้ามเนื้อ</div><div class="stat-card-after">${r.muscle_percent ? r.muscle_percent + '%' : '--'}</div></div>
+          <div class="stat-card"><div class="stat-card-title">Visceral Fat</div><div class="stat-card-after">${r.visceral_fat != null ? r.visceral_fat : '--'}</div></div>
+        </div>
+        ${r.notes ? `<div style="background:#f8fafc; padding:10px; border-radius:8px; font-size:0.85rem; margin-bottom:14px;"><b>บันทึก:</b> ${escapeHtml(r.notes)}</div>` : ''}
+        <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">รูปถ่ายใน Google Drive</h4>
+        <div class="photo-grid" style="margin-bottom:16px;">
+          <div class="compare-photo-img-wrap">${r.photo_front ? photoImg(r.photo_front) : '<div style="color:#64748b; font-size:0.7rem; display:flex; align-items:center; justify-content:center; height:100%;">ไม่มีรูปหน้า</div>'}</div>
+          <div class="compare-photo-img-wrap">${r.photo_side_left ? photoImg(r.photo_side_left) : '<div style="color:#64748b; font-size:0.7rem; display:flex; align-items:center; justify-content:center; height:100%;">ไม่มีรูปซ้าย</div>'}</div>
+          <div class="compare-photo-img-wrap">${r.photo_side_right ? photoImg(r.photo_side_right) : '<div style="color:#64748b; font-size:0.7rem; display:flex; align-items:center; justify-content:center; height:100%;">ไม่มีรูปขวา</div>'}</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;">
+          <button class="btn btn-secondary btn-block" onclick="openEditRecordModal(${r.id})">
+            ✏️ แก้ไขข้อมูล
+          </button>
+          <button class="btn btn-danger btn-block" onclick="handleDeleteRecord(${r.id})">
+            🗑️ ลบบันทึกนี้
+          </button>
+        </div>
+      `;
+      hydratePhotos(document.getElementById("recDetailContent"));
+      openModal("modalRecordDetail");
+    }
+
+    function calculateEditBMIPreview() {
+      const h = parseFloat(document.getElementById("editRecordHeight").value);
+      const w = parseFloat(document.getElementById("editRecordWeight").value);
+      const box = document.getElementById("editBmiPreviewBox");
+      if (h > 50 && w > 20) {
+        const bmi = (w / ((h / 100) * (h / 100))).toFixed(1);
+        box.style.display = "flex";
+        document.getElementById("editBmiValueText").textContent = bmi;
+        const badge = document.getElementById("editBmiCategoryBadge");
+        if (bmi < 18.5) { badge.textContent = "ผอม"; badge.className = "badge badge-warning"; }
+        else if (bmi < 23) { badge.textContent = "สมส่วน"; badge.className = "badge badge-success"; }
+        else if (bmi < 25) { badge.textContent = "ท้วม"; badge.className = "badge badge-warning"; }
+        else { badge.textContent = "อ้วน"; badge.className = "badge badge-danger"; }
+      } else {
+        box.style.display = "none";
+      }
+    }
+
+    function openEditRecordModal(recId) {
+      closeModal("modalRecordDetail");
+      const r = state.clientRecords.find(x => x.id == recId);
+      if (!r) return;
+
+      document.getElementById("editRecordId").value = r.id;
+      document.getElementById("editRecordDate").value = r.record_date;
+      document.getElementById("editRecordHeight").value = r.height || "";
+      document.getElementById("editRecordWeight").value = r.weight || "";
+      document.getElementById("editRecordFatPercent").value = r.fat_percent != null ? r.fat_percent : "";
+      document.getElementById("editRecordMusclePercent").value = r.muscle_percent != null ? r.muscle_percent : "";
+      document.getElementById("editRecordVisceralFat").value = r.visceral_fat != null ? r.visceral_fat : "";
+      document.getElementById("editRecordBodyAge").value = r.body_age != null ? r.body_age : "";
+      document.getElementById("editRecordNotes").value = r.notes || "";
+
+      calculateEditBMIPreview();
+      openModal("modalEditRecord");
+    }
+
+    async function handleUpdateRecord(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnUpdateRecordSubmit");
+      btn.disabled = true;
+      btn.textContent = "กำลังบันทึกการแก้ไข...";
+
+      const payload = {
+        id: document.getElementById("editRecordId").value,
+        record_date: document.getElementById("editRecordDate").value,
+        height: document.getElementById("editRecordHeight").value,
+        weight: document.getElementById("editRecordWeight").value,
+        fat_percent: document.getElementById("editRecordFatPercent").value,
+        muscle_percent: document.getElementById("editRecordMusclePercent").value,
+        visceral_fat: document.getElementById("editRecordVisceralFat").value,
+        body_age: document.getElementById("editRecordBodyAge").value,
+        notes: document.getElementById("editRecordNotes").value
+      };
+
+      try {
+        const res = await runGas("apiUpdateRecord", state.authToken, payload);
+        if (!res.success) throw new Error(res.error);
+        closeModal("modalEditRecord");
+        showToast("แก้ไขข้อมูลเรียบร้อยแล้ว!", "success");
+        if (state.selectedClient) {
+          viewClientDetail(state.selectedClient.id);
+        }
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "💾 บันทึกการแก้ไข";
+      }
+    }
+
+    async function handleDeleteRecord(recId) {
+      const r = state.clientRecords.find(x => x.id == recId);
+      const dateStr = r ? r.record_date : "";
+      if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบบันทึกข้อมูลวันที่ ${dateStr}? (การกระทำนี้ไม่สามารถย้อนกลับได้)`)) {
+        return;
+      }
+
+      showToast("กำลังลบข้อมูล...", "info");
+      try {
+        const res = await runGas("apiDeleteRecord", state.authToken, recId);
+        if (!res.success) throw new Error(res.error);
+        closeModal("modalRecordDetail");
+        showToast("ลบบันทึกข้อมูลเรียบร้อยแล้ว!", "success");
+        if (state.selectedClient) {
+          viewClientDetail(state.selectedClient.id);
+        }
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    async function handleDeleteClient(clientId, clientName) {
+      if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้า "${clientName}" พร้อมประวัติทั้งหมด?`)) {
+        return;
+      }
+      showToast("กำลังลบข้อมูลลูกค้า...", "info");
+      try {
+        const res = await runGas("apiDeleteClient", state.authToken, clientId);
+        if (!res.success) throw new Error(res.error);
+        showToast("ลบข้อมูลลูกค้าเรียบร้อยแล้ว", "success");
+        switchNavTab("clients");
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
