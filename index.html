@@ -244,16 +244,13 @@
     </div>
 
     <div class="card">
-      <div class="view-tabs" style="margin-bottom: 20px;">
-        <button id="tabLogin" class="view-tab active" onclick="switchAuthTab('login')">เข้าสู่ระบบ (Login)</button>
-        <button id="tabRegister" class="view-tab" onclick="switchAuthTab('register')">สมัครสมาชิกใหม่</button>
-      </div>
+      <h2 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 16px;">เข้าสู่ระบบ</h2>
 
       <!-- Login Form -->
       <form id="formLogin" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label class="form-label">ชื่อผู้ใช้ (Username)</label>
-          <input type="text" id="loginUsername" class="form-control" placeholder="เช่น coach_mike" autocapitalize="none" required autocomplete="username">
+          <label class="form-label">รหัส ABO</label>
+          <input type="text" id="loginUsername" class="form-control" placeholder="กรอกรหัส ABO" autocapitalize="none" autocorrect="off" spellcheck="false" required autocomplete="username">
         </div>
         <div class="form-group" style="margin-bottom: 20px;">
           <label class="form-label">รหัสผ่าน (Password)</label>
@@ -262,22 +259,7 @@
         <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block">เข้าสู่ระบบ</button>
       </form>
 
-      <!-- Register Form -->
-      <form id="formRegister" onsubmit="handleRegister(event)" style="display: none;">
-        <div class="form-group">
-          <label class="form-label">ชื่อ-นามสกุล / ชื่อผู้ฝึกสอน <span class="required">*</span></label>
-          <input type="text" id="regFullName" class="form-control" placeholder="เช่น โค้ชไมค์ เอกชัย" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">ชื่อผู้ใช้ (Username สำหรับ Login) <span class="required">*</span></label>
-          <input type="text" id="regUsername" class="form-control" placeholder="เช่น coach_mike (ภาษาอังกฤษ/ตัวเลข)" autocapitalize="none" required autocomplete="username">
-        </div>
-        <div class="form-group" style="margin-bottom: 20px;">
-          <label class="form-label">รหัสผ่าน (Password) <span class="required">*</span></label>
-          <input type="password" id="regPassword" class="form-control" placeholder="อย่างน้อย 4 ตัวอักษร" required autocomplete="new-password">
-        </div>
-        <button type="submit" id="btnRegSubmit" class="btn btn-primary btn-block">สร้างบัญชีผู้ใช้</button>
-      </form>
+      <p style="margin-top: 14px; font-size: 0.8rem; color: var(--text-muted); text-align: center;">ยังไม่มีบัญชี? ติดต่อผู้ดูแลระบบ (admin) เพื่อขอสร้างบัญชี</p>
 
       <div style="margin-top: 18px; padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; font-size: 0.78rem; color: #475569; display: flex; gap: 8px; align-items: center;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -713,6 +695,26 @@
         <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">☁️ Google Drive & Sheets Integration</div>
         ข้อมูลสัดส่วนทั้งหมดถูกบันทึกที่ Google Sheets และรูปภาพทั้งหมดถูกเก็บไว้ที่ Google Drive ในโฟลเดอร์ <b>BodyTrack_Photos</b> ของบัญชีคุณ
       </div>
+      <div id="adminPanel" class="card" style="display: none; margin-bottom: 16px;">
+        <div style="font-weight: 700; margin-bottom: 10px;">👤 จัดการผู้ใช้ (Admin)</div>
+        <form id="formAdminCreate" onsubmit="handleAdminCreateUser(event)">
+          <div class="form-group">
+            <label class="form-label">รหัส ABO <span class="required">*</span></label>
+            <input type="text" id="adminNewAbo" class="form-control" placeholder="เช่น 1234567" autocapitalize="none" autocorrect="off" spellcheck="false" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ชื่อ-นามสกุล <span class="required">*</span></label>
+            <input type="text" id="adminNewName" class="form-control" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">รหัสผ่าน <span class="required">*</span></label>
+            <input type="password" id="adminNewPassword" class="form-control" placeholder="อย่างน้อย 4 ตัวอักษร" minlength="4" required autocomplete="new-password">
+          </div>
+          <button type="submit" id="btnAdminCreate" class="btn btn-primary btn-block">➕ สร้างบัญชี</button>
+        </form>
+        <div style="font-weight: 700; margin: 16px 0 6px;">ผู้ใช้ทั้งหมด</div>
+        <div id="adminUserList" style="font-size: 0.85rem;"></div>
+      </div>
       <button class="btn btn-danger btn-block" onclick="handleLogout()">ออกจากระบบ (Logout)</button>
     </div>
   </div>
@@ -841,15 +843,10 @@
         document.getElementById("profileFullNameText").textContent = u.full_name || u.username;
         document.getElementById("profileUsernameText").textContent = `@${u.username}`;
         document.getElementById("profileAvatarText").textContent = (u.full_name || u.username).charAt(0).toUpperCase();
+        document.getElementById("adminPanel").style.display = u.is_admin ? "block" : "none";
       }
     }
 
-    function switchAuthTab(mode) {
-      document.getElementById("tabLogin").classList.toggle("active", mode === "login");
-      document.getElementById("tabRegister").classList.toggle("active", mode === "register");
-      document.getElementById("formLogin").style.display = mode === "login" ? "block" : "none";
-      document.getElementById("formRegister").style.display = mode === "register" ? "block" : "none";
-    }
 
     async function handleLogin(e) {
       e.preventDefault();
@@ -867,7 +864,7 @@
         state.authToken = res.token;
         setStoredToken(res.token);
         state.currentUser = res.user;
-        showToast(`ยินดีต้อนรับคุณ ${res.user.full_name}!`, "success");
+        showToast(res.password_set ? "ตั้งรหัสผ่านเรียบร้อยแล้ว ครั้งต่อไปใช้รหัสนี้เข้าสู่ระบบ" : `ยินดีต้อนรับคุณ ${res.user.full_name}!`, "success");
         showAppView();
         loadClients();
       } catch (err) {
@@ -878,31 +875,54 @@
       }
     }
 
-    async function handleRegister(e) {
-      e.preventDefault();
-      const btn = document.getElementById("btnRegSubmit");
-      btn.disabled = true;
-      btn.textContent = "กำลังลงทะเบียน...";
-
-      const fn = document.getElementById("regFullName").value.trim();
-      const u = document.getElementById("regUsername").value.trim();
-      const p = document.getElementById("regPassword").value;
-
+    // ===== Admin: จัดการผู้ใช้ =====
+    async function loadAdminUsers() {
+      const box = document.getElementById("adminUserList");
+      box.textContent = "กำลังโหลด...";
       try {
-        const res = await runGas("apiRegister", fn, u, p);
+        const res = await runGas("apiAdminListUsers", state.authToken);
         if (!res.success) throw new Error(res.error);
+        box.innerHTML = res.users.map(u => `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #e2e8f0;">
+            <div><b>${escapeHtml(u.username)}</b><br><span style="color:var(--text-muted);">${escapeHtml(u.full_name)}</span></div>
+            <button type="button" class="btn btn-secondary btn-sm" data-u="${escapeHtml(u.username)}" onclick="handleAdminResetPassword(this.dataset.u)">${u.username === "admin" ? "เปลี่ยนรหัส" : "รีเซ็ตรหัส"}</button>
+          </div>`).join("") || "ยังไม่มีผู้ใช้";
+      } catch (err) {
+        box.textContent = err.message;
+      }
+    }
 
-        state.authToken = res.token;
-        setStoredToken(res.token);
-        state.currentUser = res.user;
-        showToast("สร้างบัญชีสำเร็จ!", "success");
-        showAppView();
-        loadClients();
+    async function handleAdminCreateUser(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnAdminCreate");
+      btn.disabled = true;
+      btn.textContent = "กำลังสร้างบัญชี...";
+      try {
+        const res = await runGas("apiAdminCreateUser", state.authToken,
+          document.getElementById("adminNewAbo").value.trim(),
+          document.getElementById("adminNewName").value.trim(),
+          document.getElementById("adminNewPassword").value);
+        if (!res.success) throw new Error(res.error);
+        showToast(`สร้างบัญชี ${res.user.username} แล้ว`, "success");
+        document.getElementById("formAdminCreate").reset();
+        loadAdminUsers();
       } catch (err) {
         showToast(err.message, "error");
       } finally {
         btn.disabled = false;
-        btn.textContent = "สร้างบัญชีผู้ใช้";
+        btn.textContent = "➕ สร้างบัญชี";
+      }
+    }
+
+    async function handleAdminResetPassword(username) {
+      const p = prompt(`ตั้งรหัสผ่านใหม่ให้ ${username} (อย่างน้อย 4 ตัวอักษร)`);
+      if (!p) return;
+      try {
+        const res = await runGas("apiAdminResetPassword", state.authToken, username, p);
+        if (!res.success) throw new Error(res.error);
+        showToast("เปลี่ยนรหัสผ่านแล้ว", "success");
+      } catch (err) {
+        showToast(err.message, "error");
       }
     }
 
@@ -1417,7 +1437,10 @@
 
     function openModal(id) { document.getElementById(id).classList.add("open"); }
     function closeModal(id) { document.getElementById(id).classList.remove("open"); }
-    function openProfileModal() { openModal("modalProfile"); }
+    function openProfileModal() {
+      openModal("modalProfile");
+      if (state.currentUser && state.currentUser.is_admin) loadAdminUsers();
+    }
 
     function openRecordDetailModal(recId) {
       const r = state.clientRecords.find(x => x.id == recId);
